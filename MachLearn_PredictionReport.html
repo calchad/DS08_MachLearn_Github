@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
-<meta name="author" content="Carolyn Chadwick" />
+<meta name="author" content="TreeCalX" />
 
 
 <title>Model to predict quality of activity performance</title>
@@ -62,8 +62,8 @@ img {
 
 <div id="header">
 <h1 class="title">Model to predict quality of activity performance</h1>
-<h4 class="author"><em>Carolyn Chadwick</em></h4>
-<h4 class="date"><em>Tuesday, 2 June 2015</em></h4>
+<h4 class="author"><em>TreeCalX</em></h4>
+<h4 class="date"><em>Sunday, 21 June 2015</em></h4>
 </div>
 
 
@@ -148,8 +148,8 @@ dim(OwnTrain)</code></pre>
 <pre class="r"><code>## create random forest model from variable columns left in data
 ## save it for later use &amp; blank the following 2 code lines to save
 ## processing time
-OwnTrainModel &lt;- train(classe~., method=&quot;rf&quot;, data=OwnTrain)
-saveRDS(OwnTrainModel, &quot;OwnTrainModel.RDS&quot;)
+## OwnTrainModel &lt;- train(classe~., method=&quot;rf&quot;, data=OwnTrain)
+## saveRDS(OwnTrainModel, &quot;OwnTrainModel.RDS&quot;)
 
 ## read in saved model data
 OwnTrainModel &lt;- readRDS(&quot;OwnTrainModel.RDS&quot;)</code></pre>
@@ -164,12 +164,15 @@ mean(predict(OwnTrainModel, OwnTest) == OwnTest$classe) * 100</code></pre>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>We have built a model to predict exercise form based on movement data. We estimate the out of sample error to be .2% (1 - testing accuracy). This is a promising result regarding the use of machine learning to detect bad exercise form. It must be notes that what we are truly predicting here is the which of 5 predetermined supervised movements a subject is performing. So, although we estimate a very low out of sample error, we can expect the error of predicting bad form in real life situations to be higher.</p>
-<p>```</p>
+<p>This model is deemed to be accurate enough to be used for classfication of the 20 test cases required for submission as the final part of this assignment.</p>
+<pre class="r"><code>PredOnTest &lt;- predict(OwnTrainModel, newdata=DTTest)
+PredOnTest</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
 </div>
 <div id="citation" class="section level2">
 <h2>Citation:</h2>
-<p>The weight lifting dataset was sourced from<br /> <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a><br />courtesy of the authors of the following research paper:<br /> “Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI<br /> (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.”</p>
+<p>The weight lifting dataset was sourced from<br /> <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a><br />courtesy of the authors of the following research paper:<br /> “Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI<br /> (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.”</p>
 </div>
 
 

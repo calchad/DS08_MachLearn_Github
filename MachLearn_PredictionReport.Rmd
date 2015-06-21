@@ -182,8 +182,8 @@ to predict the activity class using own training set (60% of original training d
 ## create random forest model from variable columns left in data
 ## save it for later use & blank the following 2 code lines to save
 ## processing time
-OwnTrainModel <- train(classe~., method="rf", data=OwnTrain)
-saveRDS(OwnTrainModel, "OwnTrainModel.RDS")
+## OwnTrainModel <- train(classe~., method="rf", data=OwnTrain)
+## saveRDS(OwnTrainModel, "OwnTrainModel.RDS")
 
 ## read in saved model data
 OwnTrainModel <- readRDS("OwnTrainModel.RDS")
@@ -196,23 +196,21 @@ by seeing how well it predicts classes for activities in own test set (40% of or
 
 ## Accuracy as the percentage of correct predictions by the model 
 ##
-PredOnTrain <- predict(OwnTrainModel, OwnTest) == OwnTest$classe)
-mean( PredOnTrain) * 100
+mean(predict(OwnTrainModel, OwnTest) == OwnTest$classe) * 100
 
 ```
-
-```{r}
-## Check out the confusion matrix from the model
-##
-confusionMatrix(PredOnTrain,training$classe)
 
 
 ## Conclusion
+This model is deemed to be accurate enough to be used for classfication of the 20 test cases required for submission as the final part of this assignment.
 
-This model appears acceptably accurate from the confusion matrix results. Other methods tried did not improve on these results so this result was used to predict the classfication of the 20 test cases required for submission as the final part of this assignment.
+```{r}
 
+PredOnTest <- predict(OwnTrainModel, newdata=DTTest)
+PredOnTest
 
 ```
+
 ## Citation: 
 The weight lifting dataset was sourced from  
     http://groupware.les.inf.puc-rio.br/har  

@@ -1,6 +1,6 @@
 # Model to predict quality of activity performance
-Carolyn Chadwick  
-Tuesday, 2 June 2015  
+TreeCalX  
+Sunday, 21 June 2015  
 
 - Prediction Assignment for the Practical Machine Learning Module of the Data Science Specialization    
 Writeup & submission instructions & evaluation criteria can be found in the accompanying MachLearn_Readme.md file
@@ -159,8 +159,8 @@ to predict the activity class using own training set (60% of original training d
 ## create random forest model from variable columns left in data
 ## save it for later use & blank the following 2 code lines to save
 ## processing time
-OwnTrainModel <- train(classe~., method="rf", data=OwnTrain)
-saveRDS(OwnTrainModel, "OwnTrainModel.RDS")
+## OwnTrainModel <- train(classe~., method="rf", data=OwnTrain)
+## saveRDS(OwnTrainModel, "OwnTrainModel.RDS")
 
 ## read in saved model data
 OwnTrainModel <- readRDS("OwnTrainModel.RDS")
@@ -181,16 +181,19 @@ mean(predict(OwnTrainModel, OwnTest) == OwnTest$classe) * 100
 ```
 
 
-
 ## Conclusion
-We have built a model to predict exercise form based on movement data. We estimate the out of sample error to be .2% (1 - testing accuracy). This is a promising result regarding the use of machine learning to detect bad exercise form. It must be notes that what we are truly predicting here is the which of 5 predetermined supervised movements a subject is performing. So, although we estimate a very low out of sample error, we can expect the error of predicting bad form in real life situations to be higher.
+This model is deemed to be accurate enough to be used for classfication of the 20 test cases required for submission as the final part of this assignment.
 
 
+```r
+PredOnTest <- predict(OwnTrainModel, newdata=DTTest)
+PredOnTest
 ```
 
-
-
-
+```
+##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
+```
 
 ## Citation: 
 The weight lifting dataset was sourced from  
