@@ -1,0 +1,225 @@
+---
+title: "Model to predict quality of activity performance"
+author: "TreeCalX"
+date: "Sunday, 21 June 2015"
+output: 
+  html_document:
+    keep_md: true
+---
+
+- Prediction Assignment for the Practical Machine Learning Module of the Data Science Specialization    
+Writeup & submission instructions & evaluation criteria can be found in the accompanying MachLearn_Readme.md file
+      
+
+
+
+## Synopsis
+
+Human activity recognition research to date has focussed on quantitative measurements (eg. type, timing & duration of activity). Qualitative assessment of "how well" an activity is performed has received relatively little attention. Feedback on quality of performance has potential uses in training contexts provided that   
+- correct execution & deviations from that norm can be defined  
+- execution mistakes can automatically & reliably recognized
+
+This report investigates performance quality recognition via algorithm.
+using a "Weight Lifting Exercise"" dataset collected from sensors on bodies of participants & their equipment.  Six men used a 1.25kg dumbbell to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions:  
+- Class A: lift dumbbell correctly  
+- Class B: throwing the elbows to the front  
+- Class C: lifting the dumbbell only halfway  
+- Class D: lowering the dumbbell only halfway   
+- Class E: throwing the hips to the front   
+
+## Data Processing
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## open the R packages required by this report
+require(caret)
+require(utils)
+require(data.table)
+require(AppliedPredictiveModeling)
+require(stats)
+require(graphics)
+require(rmarkdown)
+require(ggplot2)
+require(rpart)
+require(rpart.plot)
+require(RColorBrewer)
+require(rattle)
+require(randomForest)
+
+library(caret)
+library(utils)
+library(data.table)
+library(AppliedPredictiveModeling)
+library(stats)
+library(graphics)
+library(rmarkdown)
+library(ggplot2)
+library(rpart)
+library(rpart.plot)
+library(RColorBrewer)
+library(rattle)
+library(randomForest)
+
+```
+
+```{r warning=FALSE}
+
+## download training & testing data from the web to local files if necessary
+## and read into data tables in memory
+
+DestTrain <- paste(getwd(),"PMLTrain.csv",sep="/")
+DestTest <- paste(getwd(),"PMLTest.csv",sep="/")
+NAStr    <- c("", "NA", "N/A", "NULL","#DIV/0!")
+
+setInternet2(TRUE)
+
+if( !file(DestTrain)){
+     URLTrain  <- 
+     "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+     download.file(URLTrain, destfile=DestTrain)
+     }
+if( !file(DestTest)){
+     URLTest <- 
+     "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+     download.file(URLTest, destfile=DestTest)
+     }
+
+DTTrain   <- read.table(DestTrain, sep=",", header=TRUE, na.strings=NAStr)
+dim(DTTrain)
+
+DTTest   <- read.table(DestTest, sep=",", header=TRUE, na.strings=NAStr)
+dim(DTTest)
+```
+
+```{r eval=FALSE, echo=FALSE}
+## alternative file reading statement
+## DFTest   <- read.csv(DestTest, na.strings=NAStr)
+## dim(DFTest)
+## alternative file reading statement
+## DFTrain   <- read.csv(DestTrain, na.strings=NAStr)
+## dim(DFTrain)
+```
+
+
+```{r echo=FALSE}
+
+## reduce the no. of variables used for modeling purposes 
+## 
+## The exploration of NA values below shows 100 of 160 columns 
+## have >97% missing values & are removed from the training & testing data
+## 
+## The first seven variables in each data set are discarded as
+## being of no relevant for activity id recognition
+##
+## the last column in training (classe) to movement class 
+## it has a different name (problem_id) in the test 
+## it is moved to the 1st column & named classe in train & test data
+##
+
+## column names & variable types
+DTCols  <- colnames(DTTrain)
+DTClass <- sapply( DTTrain, class)
+nCols   <- length(DTCols)
+
+NACount  <- NULL
+for(i in 1:nCols) { 
+    NACount <- c(NACount, sum(is.na(DTTrain[[i]])))
+    }   
+```
+ 
+```{r eval=FALSE, echo=FALSE }
+
+## remove exploratory listing of variables names & NA counts from report
+for(i in 1:nCols){print(paste(i,DTCols[i],DTClass[i],NACount[i], sep=" "))}
+```
+
+```{r}
+
+sum(NACount>0)     ## no. of columns with missing values  
+table(NACount)     ## table showing spread of no. of missing varialbes
+```
+
+```{r}
+## remove NA & other unwanted cols
+## renaming first column to classe in both data sets 
+
+NAColNames <- NULL
+for(i in 8:nCols-1){
+ if(NACount[i]==0){
+  NAColNames <- c(NAColNames, DTCols[i])
+ }
+}
+
+DTTrain     <- DTTrain[c(colnames(DTTrain[nCols]),NAColNames)]
+DTTest      <- DTTest[c(NAColNames)]
+DTTest1     <- as.data.frame(rep(NA,length(DTTest[,2])))
+colnames(DTTest1)<-colnames(DTTrain[1])
+DTTest      <- cbind(DTTest1, DTTest)
+dim(DTTrain)
+dim(DTTest)
+
+```
+
+
+```{r}
+
+## set random number generator seed to ensure reproducibility of results
+set.seed(1)
+
+## split training data into own 60% own training & 40% own testing sets
+PartTrain <- createDataPartition(y=DTTrain$classe, p=0.6, list=FALSE)
+OwnTrain  <- DTTrain[PartTrain,]
+OwnTest   <- DTTrain[-PartTrain,]
+dim(OwnTrain)
+dim(OwnTest)
+```
+
+## Build Random Forest Model 
+to predict the activity class using own training set (60% of original training data)
+
+
+```{r}
+
+## create random forest model from variable columns left in data
+## save it for later use & blank the following 2 code lines to save
+## processing time
+OwnTrainModel <- train(classe~., method="rf", data=OwnTrain)
+saveRDS(OwnTrainModel, "OwnTrainModel.RDS")
+
+## read in saved model data
+OwnTrainModel <- readRDS("OwnTrainModel.RDS")
+```
+
+## Evaluate Model 
+by seeing how well it predicts classes for activities in own test set (40% of original training data)
+
+```{r}
+
+## Accuracy as the percentage of correct predictions by the model 
+##
+PredOnTrain <- predict(OwnTrainModel, OwnTest) == OwnTest$classe)
+mean( PredOnTrain) * 100
+
+```
+
+```{r}
+## Check out the confusion matrix from the model
+##
+confusionMatrix(PredOnTrain,training$classe)
+
+
+## Conclusion
+
+This model appears acceptably accurate from the confusion matrix results. Other methods tried did not improve on these results so this result was used to predict the classfication of the 20 test cases required for submission as the final part of this assignment.
+
+
+```
+## Citation: 
+The weight lifting dataset was sourced from  
+    http://groupware.les.inf.puc-rio.br/har  
+courtesy of the authors of the following research paper:     
+    "Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. 
+    Qualitative   Activity Recognition of Weight Lifting Exercises. 
+    Proceedings of 4th International Conference in Cooperation with SIGCHI  
+    (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013."
+
+
